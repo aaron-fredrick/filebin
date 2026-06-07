@@ -103,7 +103,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   publish-testpypi:
-    needs: [lint, static, security, test]
+    needs: [build, lint, static, security, test]
     if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
 
@@ -143,15 +143,23 @@ jobs:
               data = tomllib.load(f)
 
           base_version = data["project"]["version"]
-
-          branch = os.environ["GITHUB_REF_NAME"]
-          branch = re.sub(r"[^A-Za-z0-9]+", "_", branch)
-
           short_sha = os.environ["GITHUB_SHA"][:7]
 
-          dynamic_version = f"{base_version}+{branch}.{short_sha}"
+          # convert hex sha → decimal string
+          sha_decimal = str(int(short_sha, 16))
+
+          # check if already a dev version
+          is_dev = ".dev" in base_version
+
+          if is_dev:
+              # strip nothing, just append sha
+              dynamic_version = f"{base_version}{sha_decimal}"
+          else:
+              # inject dev segment
+              dynamic_version = f"{base_version}.dev{sha_decimal}"
 
           text = pyproject.read_text(encoding="utf-8")
+
           text = re.sub(
               r'version\s*=\s*"[^"]+"',
               f'version = "{dynamic_version}"',
