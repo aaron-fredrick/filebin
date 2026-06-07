@@ -86,7 +86,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked --all-extras
       - name: Test (Unit & CLI)
-        run: uv run pytest -m "unit or cli" -v --cov=filebin --cov-report=xml
+        run: uv run pytest -m "unit or cli" -v --cov=filebin --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
       - name: Test (Integration)
         if: ${{ env.FILEBIN_INTEGRATION == '1' }}
         run: uv run pytest -m network -v
@@ -94,6 +94,11 @@ jobs:
           FILEBIN_INTEGRATION: ${{ secrets.FILEBIN_INTEGRATION }}
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
