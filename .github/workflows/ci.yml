@@ -2,36 +2,74 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: ["*"]
   pull_request:
-    branches: [main]
+    branches: ["main"]
 
 jobs:
   test:
-    name: "Test — Python ${{ matrix.python-version }}"
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
+          python-version-file: ".python-version"
 
       - name: Install dependencies
+        run: uv sync --locked --all-extras
+
+      - name: Lint (Ruff)
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          uv run ruff check .
+          uv run ruff format --check .
 
-      - name: Lint with ruff
-        run: ruff check Filebin/ tests/
+      - name: Typecheck (Mypy)
+        run: uv run mypy filebin/ --strict
 
-      - name: Run unit tests (no network)
-        run: pytest -m "not network" -v --tb=short
+      - name: Security (Bandit)
+        run: uv run bandit -r filebin/ -ll
+
+      - name: Test (Unit)
+        run: uv run pytest -m unit -v --cov=filebin --cov-report=xml
+
+      - name: Test (Integration)
+        if: ${{ env.FILEBIN_INTEGRATION == '1' }}
+        run: uv run pytest -m network -v
+        env:
+          FILEBIN_INTEGRATION: ${{ secrets.FILEBIN_INTEGRATION }}
+
+      - name: Build
+        run: uv build
+
+  publish-testpypi:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/filebin
+    permissions:
+      id-token: write  # for trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+          
+      - name: Build Package
+        run: uv build
+        
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/

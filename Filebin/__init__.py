@@ -1,31 +1,39 @@
-"""Filebin.py — async Python wrapper for the Filebin.net API."""
+"""filebin — Python SDK and CLI for the Filebin.net API."""
 
-from .api import API
-from ._models import Bin, File, QR
-from .errors import (
+from filebin.__version__ import __version__
+from filebin.client.async_client import AsyncFilebinClient
+from filebin.client.sync_client import FilebinClient
+from filebin.core.config import ClientConfig
+from filebin.core.errors import (
+    AuthenticationError,
+    BinLockedError,
+    BinNotFoundError,
     FilebinError,
-    InvalidArchiveType,
-    InvalidBin,
-    InvalidFile,
-    InvalidBinOrFile,
-    DownloadCountReached,
-    StorageFull,
-    LockedBin,
-    LockFailed,
+    FileNotFoundError,
+    NetworkError,
+    RateLimitError,
+    ServerError,
+    StorageFullError,
+    TimeoutError,
 )
+from filebin.models.bin import BinModel
+from filebin.models.file import FileModel
 
 __all__ = [
-    "API",
-    "Bin",
-    "File",
-    "QR",
+    "__version__",
+    "AsyncFilebinClient",
+    "FilebinClient",
+    "ClientConfig",
+    "BinModel",
+    "FileModel",
     "FilebinError",
-    "InvalidArchiveType",
-    "InvalidBin",
-    "InvalidFile",
-    "InvalidBinOrFile",
-    "DownloadCountReached",
-    "StorageFull",
-    "LockedBin",
-    "LockFailed",
+    "NetworkError",
+    "TimeoutError",
+    "RateLimitError",
+    "ServerError",
+    "AuthenticationError",
+    "BinNotFoundError",
+    "FileNotFoundError",
+    "BinLockedError",
+    "StorageFullError",
 ]
