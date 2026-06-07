@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -171,6 +171,7 @@ def test_raise_for_status_500_server_error() -> None:
 
 def test_raise_for_status_unhandled_logs_warning(caplog) -> None:
     import logging
+
     with caplog.at_level(logging.WARNING, logger="filebin.core.http"):
         HttpTransport._raise_for_status(_parsed(418), bin_id=None, filename=None)
     assert "418" in caplog.text
@@ -206,6 +207,7 @@ async def test_decode_body_binary() -> None:
 @pytest.mark.asyncio
 async def test_decode_body_gzip() -> None:
     import gzip as gzip_mod
+
     original = b'{"key": "zipped"}'
     compressed = gzip_mod.compress(original)
     response = _make_aiohttp_response(
@@ -247,7 +249,9 @@ async def test_post_request() -> None:
     response = _make_aiohttp_response(body=b'{"file": {}}', status=200)
     _patch_session(transport, response)
 
-    result = await transport.post("/test-bin/f.txt", data=b"hello", bin_id="test-bin", filename="f.txt")
+    result = await transport.post(
+        "/test-bin/f.txt", data=b"hello", bin_id="test-bin", filename="f.txt"
+    )
 
     assert result.status == 200
 

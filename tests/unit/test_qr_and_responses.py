@@ -14,6 +14,7 @@ class TestQRModel:
 
     def test_image_property_without_pillow_raises(self, monkeypatch) -> None:
         import filebin.models.qr as qr_module
+
         try:
             from PIL import Image  # noqa: F401
         except ImportError:

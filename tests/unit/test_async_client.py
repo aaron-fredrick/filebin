@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from filebin.client.async_client import AsyncFilebinClient
 from filebin.models.bin import BinModel
@@ -74,7 +75,11 @@ async def test_delete_bin(client, mock_transport) -> None:
 @pytest.mark.asyncio
 async def test_delete_file(client, mock_transport) -> None:
     await client.delete_file("test-bin", "test.txt")
-    mock_transport.delete.assert_awaited_once_with("/test-bin/test.txt", bin_id="test-bin", filename="test.txt")
+    mock_transport.delete.assert_awaited_once_with(
+        "/test-bin/test.txt",
+        bin_id="test-bin",
+        filename="test.txt",
+    )
 
 
 @pytest.mark.asyncio
@@ -107,7 +112,11 @@ async def test_download_file(client, mock_transport, tmp_path) -> None:
     dest = await client.download_file("test-bin", "test.txt", tmp_path)
 
     assert dest.read_bytes() == b"hello"
-    mock_transport.get.assert_awaited_once_with("/test-bin/test.txt", bin_id="test-bin", filename="test.txt")
+    mock_transport.get.assert_awaited_once_with(
+        "/test-bin/test.txt",
+        bin_id="test-bin",
+        filename="test.txt",
+    )
 
 
 @pytest.mark.asyncio
