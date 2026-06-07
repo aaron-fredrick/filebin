@@ -73,8 +73,8 @@ Changelog = "https://github.com/aaron-fredrick/filebin/releases"
 packages = ["filebin"]
 
 
-[tool.uv]
-dev-dependencies = []
+[dependency-groups]
+dev = []
 
 
 [tool.pytest.ini_options]

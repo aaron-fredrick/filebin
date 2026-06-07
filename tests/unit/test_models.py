@@ -1,9 +1,9 @@
 import datetime
 
+import pytest
+
 from filebin.models.bin import BinModel
 from filebin.models.file import FileModel
-
-import pytest
 
 pytestmark = pytest.mark.unit
 
