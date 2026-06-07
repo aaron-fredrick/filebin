@@ -6,7 +6,12 @@ on:
       - "v*"
 
 jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
   publish:
+    needs: ci
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -17,22 +22,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
         with:
-          python-version-file: ".python-version"
-
-      - name: Install dependencies
-        run: uv sync --locked --all-extras
-
-      - name: Test (Unit Gate)
-        run: uv run pytest -m unit -v
-
-      - name: Build Package
-        run: uv build
+          name: package-dist
+          path: dist/
 
       - name: GitHub Release
         uses: softprops/action-gh-release@v2
