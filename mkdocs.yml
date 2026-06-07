@@ -1,0 +1,70 @@
+site_name: Filebin
+site_description: Python SDK and CLI for the Filebin.net API
+site_url: https://aaron-fredrick.github.io/filebin/
+repo_url: https://github.com/aaron-fredrick/filebin
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_root_heading: true
+            show_source: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+nav:
+  - Home: index.md
+  - Architecture:
+    - Overview: architecture/overview.md
+    - Context: architecture/context.mmd
+    - Container: architecture/container.mmd
+    - Component: architecture/component.mmd
+  - Design Contracts:
+    - Retry Policy: contracts/retry_policy.md
+    - Error Mapping: contracts/error_mapping.md
+    - Endpoint Mapping: contracts/endpoint_mapping.md
+  - ADRs:
+    - Async-first: adr/ADR-001-async-first.md
+    - UV Toolchain: adr/ADR-002-uv-toolchain.md
+    - Retry Strategy: adr/ADR-003-retry-strategy.md
+    - CLI Design: adr/ADR-004-cli-design.md
+    - Layering: adr/ADR-005-layering.md
+  - API Reference:
+    - Client: api/client.md
+  - CLI:
+    - Usage: cli/usage.md

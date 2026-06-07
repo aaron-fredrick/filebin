@@ -2,36 +2,180 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: ["*"]
   pull_request:
-    branches: [main]
+    branches: ["main"]
+  workflow_call:
 
 jobs:
-  test:
-    name: "Test — Python ${{ matrix.python-version }}"
+  build:
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
+          python-version-file: ".python-version"
+      - name: Build Package
+        run: uv build
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-dist
+          path: dist/
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+      - name: Install dependencies
+        run: uv sync --locked --all-extras
+      - name: Lint (Ruff)
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+      - name: Install dependencies
+        run: uv sync --locked --all-extras
+      - name: Typecheck (Mypy)
+        run: uv run mypy filebin/ --strict
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+      - name: Install dependencies
+        run: uv sync --locked --all-extras
+      - name: Security (Bandit)
+        run: uv run bandit -r filebin/ -ll
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+      - name: Install dependencies
+        run: uv sync --locked --all-extras
+      - name: Test (Unit & CLI)
+        run: uv run pytest -m "unit or cli" -v --cov=filebin --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
+      - name: Test (Integration)
+        if: ${{ env.FILEBIN_INTEGRATION == '1' }}
+        run: uv run pytest -m network -v
+        env:
+          FILEBIN_INTEGRATION: ${{ secrets.FILEBIN_INTEGRATION }}
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  publish-testpypi:
+    needs: [build, lint, static, security, test]
+    if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/filebin
+
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
 
       - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Generate TestPyPI version
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          python << 'EOF'
+          import re
+          import tomllib
+          from pathlib import Path
+          import os
 
-      - name: Lint with ruff
-        run: ruff check Filebin/ tests/
+          pyproject = Path("pyproject.toml")
 
-      - name: Run unit tests (no network)
-        run: pytest -m "not network" -v --tb=short
+          with pyproject.open("rb") as f:
+              data = tomllib.load(f)
+
+          base_version = data["project"]["version"]
+          short_sha = os.environ["GITHUB_SHA"][:7]
+
+          # convert hex sha → decimal string
+          sha_decimal = str(int(short_sha, 16))
+
+          # check if already a dev version
+          is_dev = ".dev" in base_version
+
+          if is_dev:
+              # strip nothing, just append sha
+              dynamic_version = f"{base_version}{sha_decimal}"
+          else:
+              # inject dev segment
+              dynamic_version = f"{base_version}.dev{sha_decimal}"
+
+          text = pyproject.read_text(encoding="utf-8")
+
+          text = re.sub(
+              r'version\s*=\s*"[^"]+"',
+              f'version = "{dynamic_version}"',
+              text,
+              count=1,
+          )
+
+          pyproject.write_text(text, encoding="utf-8")
+
+          print(f"Using version: {dynamic_version}")
+          EOF
+
+      - name: Build package
+        run: uv build
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
