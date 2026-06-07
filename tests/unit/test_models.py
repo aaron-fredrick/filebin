@@ -3,6 +3,10 @@ import datetime
 from filebin.models.bin import BinModel
 from filebin.models.file import FileModel
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 def test_file_from_api_dict(sample_file_data: dict) -> None:
     file = FileModel.from_api_dict(sample_file_data)

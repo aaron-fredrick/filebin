@@ -85,8 +85,8 @@ jobs:
           python-version-file: ".python-version"
       - name: Install dependencies
         run: uv sync --locked --all-extras
-      - name: Test (Unit)
-        run: uv run pytest -m unit -v --cov=filebin --cov-report=xml
+      - name: Test (Unit & CLI)
+        run: uv run pytest -m "unit or cli" -v --cov=filebin --cov-report=xml
       - name: Test (Integration)
         if: ${{ env.FILEBIN_INTEGRATION == '1' }}
         run: uv run pytest -m network -v

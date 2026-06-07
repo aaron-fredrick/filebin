@@ -3,6 +3,8 @@ import pytest
 from filebin.core.errors import BinNotFoundError, NetworkError
 from filebin.core.retry import RetryPolicy
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.mark.asyncio
 async def test_retry_success_first_try() -> None:

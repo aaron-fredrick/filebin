@@ -1,3 +1,5 @@
+import pytest
+
 from filebin.core.errors import (
     AuthenticationError,
     BinNotFoundError,
@@ -5,6 +7,8 @@ from filebin.core.errors import (
     RateLimitError,
     ServerError,
 )
+
+pytestmark = pytest.mark.unit
 
 
 def test_bin_not_found() -> None:

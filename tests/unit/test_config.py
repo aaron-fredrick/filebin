@@ -4,6 +4,8 @@ import pytest
 
 from filebin.core.config import ClientConfig
 
+pytestmark = pytest.mark.unit
+
 
 def test_config_defaults() -> None:
     config = ClientConfig()
