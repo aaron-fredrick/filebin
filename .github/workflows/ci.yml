@@ -126,6 +126,9 @@ jobs:
         with:
           python-version-file: ".python-version"
 
+      - name: Install dependencies
+        run: uv sync --locked
+
       - name: Generate TestPyPI version
         run: |
           python << 'EOF'
@@ -160,9 +163,6 @@ jobs:
 
           print(f"Using version: {dynamic_version}")
           EOF
-
-      - name: Install dependencies
-        run: uv sync --locked
 
       - name: Build package
         run: uv build
