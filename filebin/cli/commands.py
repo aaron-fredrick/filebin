@@ -62,7 +62,7 @@ async def cmd_create_bin(args: argparse.Namespace, client: AsyncFilebinClient) -
     try:
         bin_model = await client.create_bin(args.bin)
         output.print_success(f"Created/Validated bin ID: {bin_model.id}")
-        if bin_model.files > 0:
+        if len(bin_model.files) > 0:
             output.print_bin(bin_model)
     except ValueError as e:
         output.print_error(str(e))

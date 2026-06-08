@@ -65,14 +65,20 @@ class ApprovalRequiredError(AuthenticationError):
     """Raised on HTTP 403 when a bin requires approval before files can be downloaded."""
 
     def __init__(self, bin_id: str | None = None) -> None:
-        super().__init__("This bin requires approval before files can be downloaded.", bin_id=bin_id)
+        super().__init__(
+            "This bin requires approval before files can be downloaded.",
+            bin_id=bin_id,
+        )
 
 
 class FileDownloadLimitError(AuthenticationError):
     """Raised on HTTP 403 when files or bins have exceeded the download limit."""
 
     def __init__(self, bin_id: str | None = None) -> None:
-        super().__init__("The file has been requested too many times or exceeded limits.", bin_id=bin_id)
+        super().__init__(
+            "The file has been requested too many times or exceeded limits.",
+            bin_id=bin_id,
+        )
 
 
 class BinNotFoundError(FilebinError):
@@ -109,7 +115,10 @@ class StorageFullError(FilebinError):
 
 
 class UploadValidationError(FilebinError):
-    """Raised on HTTP 400 or 411 when file upload validation fails (e.g. invalid extension, size, checksums)."""
+    """Raised on HTTP 400 or 411 when file upload validation fails.
+
+    (e.g. invalid extension, size, checksums).
+    """
 
     def __init__(self, reason: str, bin_id: str | None = None) -> None:
         super().__init__(f"Upload validation failed: {reason}", status_code=400, bin_id=bin_id)

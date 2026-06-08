@@ -145,12 +145,16 @@ def test_raise_for_status_403_storage_full() -> None:
 
 def test_raise_for_status_403_approval_required() -> None:
     with pytest.raises(ApprovalRequiredError):
-        HttpTransport._raise_for_status(_parsed(403, "requires approval"), bin_id="b", filename=None)
+        HttpTransport._raise_for_status(
+            _parsed(403, "requires approval"), bin_id="b", filename=None
+        )
 
 
 def test_raise_for_status_403_download_limit() -> None:
     with pytest.raises(FileDownloadLimitError):
-        HttpTransport._raise_for_status(_parsed(403, "download limit reached"), bin_id="b", filename=None)
+        HttpTransport._raise_for_status(
+            _parsed(403, "download limit reached"), bin_id="b", filename=None
+        )
 
 
 def test_raise_for_status_403_auth_error() -> None:
