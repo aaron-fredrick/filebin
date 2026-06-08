@@ -1,5 +1,5 @@
 site_name: Filebin
-site_description: Python SDK and CLI for the Filebin.net API
+site_description: Python client and CLI for the Filebin.net API
 site_url: https://aaron-fredrick.github.io/filebin/
 repo_url: https://github.com/aaron-fredrick/filebin
 

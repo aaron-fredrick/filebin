@@ -21,15 +21,19 @@ import aiohttp
 
 from filebin.core.config import ClientConfig
 from filebin.core.errors import (
+    ApprovalRequiredError,
     AuthenticationError,
+    BinLockedError,
     BinNotFoundError,
     FilebinError,
+    FileDownloadLimitError,
     FileNotFoundError,
     NetworkError,
     RateLimitError,
     ServerError,
     StorageFullError,
     TimeoutError,
+    UploadValidationError,
 )
 from filebin.core.retry import RetryPolicy
 
@@ -260,10 +264,20 @@ class HttpTransport:
         if status in (200, 201, 302):
             return
 
+        body_str = str(response.body).lower() if response.body else ""
+
+        if status == 400 or status == 411:
+            raise UploadValidationError(
+                reason=str(response.body) or "Validation failed", bin_id=bin_id
+            )
+
         if status == 403:
-            body_str = str(response.body).lower() if response.body else ""
             if "storage" in body_str or "full" in body_str:
                 raise StorageFullError(bin_id or "unknown")
+            if "approval" in body_str:
+                raise ApprovalRequiredError(bin_id)
+            if "limit" in body_str or "too many times" in body_str:
+                raise FileDownloadLimitError(bin_id)
             raise AuthenticationError(
                 reason=str(response.body) or "forbidden",
                 bin_id=bin_id,
@@ -277,10 +291,20 @@ class HttpTransport:
                 raise BinNotFoundError(bin_id)
             raise BinNotFoundError(bin_id or "unknown")
 
+        if status == 405:
+            # Method not allowed. Could be locked, expired, deleted.
+            if "locked" in body_str or "readonly" in body_str:
+                raise BinLockedError(bin_id or "unknown")
+            if "expired" in body_str or "deleted" in body_str or "no longer available" in body_str:
+                raise BinNotFoundError(bin_id or "unknown")
+            raise ServerError(status_code=status, body=str(response.body or ""))
+
         if status == 429:
             raise RateLimitError()
 
         if 500 <= status < 600:
+            if status == 507:
+                raise StorageFullError(bin_id or "unknown")
             raise ServerError(status_code=status, body=str(response.body or ""))
 
         _logger.warning("Unhandled HTTP status %d from Filebin.net", status)

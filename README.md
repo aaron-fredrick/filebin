@@ -1,9 +1,11 @@
-# Filebin.net Python SDK
+# Filebin.net Python Client
 
 ![CI](https://github.com/aaron-fredrick/filebin/actions/workflows/ci.yml/badge.svg)
 ![PyPI](https://img.shields.io/pypi/v/filebin)
 
-A complete, typed, async-first Python SDK and CLI for the [Filebin.net](https://filebin.net/) API.
+A complete, typed, async-first Python client and CLI for the [Filebin.net](https://filebin.net/) API.
+
+*Note: This is an unofficial, community-driven Python wrapper for Filebin, not affiliated with the official filebin.net service.*
 
 ## Installation
 
@@ -16,7 +18,7 @@ With CLI formatting support:
 pip install filebin[cli-pretty]
 ```
 
-## Quick SDK Usage
+## Quick Client Usage
 
 ```python
 import asyncio

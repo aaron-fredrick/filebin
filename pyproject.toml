@@ -6,21 +6,21 @@ build-backend = "hatchling.build"
 [project]
 name = "filebin"
 version = "1.0.0"
-description = "Async Python SDK and CLI for the Filebin.net API"
+description = "Async Python client and CLI for the Filebin.net API"
 readme = "README.md"
 requires-python = ">=3.12"
-license = { text = "MIT" }
+license = { text = "BSD-3-Clause" }
 
 authors = [
   { name = "Aaron Fredrick", email = "Aaron_Fredrick@proton.me" },
 ]
 
-keywords = ["filebin", "api", "async", "file-upload", "file-sharing", "sdk"]
+keywords = ["filebin", "api", "async", "file-upload", "file-sharing", "client"]
 
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
+  "License :: OSI Approved :: BSD License",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.12",

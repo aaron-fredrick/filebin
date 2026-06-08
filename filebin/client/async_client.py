@@ -7,6 +7,7 @@ from typing import Literal
 
 from filebin.core.config import ClientConfig
 from filebin.core.http import HttpTransport
+from filebin.core.validation import generate_bin_id, validate_bin_id
 from filebin.models.bin import BinModel
 from filebin.models.file import FileModel
 
@@ -33,6 +34,36 @@ class AsyncFilebinClient:
     async def close(self) -> None:
         """Close the underlying HTTP transport session."""
         await self._transport.close()
+
+    def create_bin(self, bin_id: str | None = None) -> BinModel:
+        """Create a new valid bin locally.
+        
+        Note: Bins in Filebin are created dynamically upon the first file upload.
+        This method generates a valid bin ID or validates a provided one, 
+        allowing you to set up the bin locally before uploading.
+        
+        Args:
+            bin_id: Optional custom bin ID. If None, a valid random one is generated.
+            
+        Returns:
+            A BinModel instance containing the bin_id.
+            
+        Raises:
+            ValueError: If a provided bin_id is invalid.
+        """
+        if bin_id is not None:
+            validate_bin_id(bin_id)
+        else:
+            bin_id = generate_bin_id()
+            
+        # Return a shell BinModel. The backend will actually create the bin on first upload.
+        return BinModel(
+            id=bin_id,
+            readonly=False,
+            bytes=0,
+            files=0,
+            downloads=0,
+        )
 
     async def upload_file(self, bin_id: str, path: Path | str) -> FileModel:
         """Upload a local file to a bin."""

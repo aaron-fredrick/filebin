@@ -39,6 +39,38 @@ class FilebinClient:
     def __init__(self, config: ClientConfig | None = None) -> None:
         self.config = config or ClientConfig()
 
+    def create_bin(self, bin_id: str | None = None) -> BinModel:
+        """Create a new valid bin locally.
+        
+        Note: Bins in Filebin are created dynamically upon the first file upload.
+        This method generates a valid bin ID or validates a provided one, 
+        allowing you to set up the bin locally before uploading.
+        
+        Args:
+            bin_id: Optional custom bin ID. If None, a valid random one is generated.
+            
+        Returns:
+            A BinModel instance containing the bin_id.
+            
+        Raises:
+            ValueError: If a provided bin_id is invalid.
+        """
+        # Since create_bin is a synchronous local operation, we don't need the async loop
+        from filebin.core.validation import generate_bin_id, validate_bin_id
+        
+        if bin_id is not None:
+            validate_bin_id(bin_id)
+        else:
+            bin_id = generate_bin_id()
+            
+        return BinModel(
+            id=bin_id,
+            readonly=False,
+            bytes=0,
+            files=0,
+            downloads=0,
+        )
+
     def upload_file(self, bin_id: str, path: Path | str) -> FileModel:
         """Upload a local file to a bin."""
         _guard_no_running_loop()
