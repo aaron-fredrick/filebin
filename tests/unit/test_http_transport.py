@@ -177,6 +177,32 @@ def test_raise_for_status_405_locked_bin() -> None:
         HttpTransport._raise_for_status(_parsed(405, "bin is locked"), bin_id="b", filename=None)
 
 
+def test_raise_for_status_405_expired_bin() -> None:
+    with pytest.raises(BinNotFoundError):
+        HttpTransport._raise_for_status(
+            _parsed(405, "bin has expired"), bin_id="b", filename=None
+        )
+
+
+def test_raise_for_status_405_deleted_bin() -> None:
+    with pytest.raises(BinNotFoundError):
+        HttpTransport._raise_for_status(
+            _parsed(405, "bin deleted"), bin_id="b", filename=None
+        )
+
+
+def test_raise_for_status_405_generic_fallback() -> None:
+    with pytest.raises(ServerError):
+        HttpTransport._raise_for_status(
+            _parsed(405, "method not allowed"), bin_id="b", filename=None
+        )
+
+
+def test_raise_for_status_507_storage_full() -> None:
+    with pytest.raises(StorageFullError):
+        HttpTransport._raise_for_status(_parsed(507), bin_id="b", filename=None)
+
+
 def test_raise_for_status_404_file_not_found() -> None:
     with pytest.raises(FileNotFoundError):
         HttpTransport._raise_for_status(_parsed(404), bin_id="b", filename="f.txt")

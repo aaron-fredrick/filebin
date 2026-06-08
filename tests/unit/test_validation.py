@@ -56,3 +56,9 @@ def test_validate_bin_id_invalid_start():
     """Test validating bin IDs starting with a dot raises ValueError."""
     with pytest.raises(ValueError, match="cannot start with a dot"):
         validate_bin_id(".invalidstart")
+
+
+def test_validate_bin_id_empty_string():
+    """Test validating an empty bin ID raises ValueError."""
+    with pytest.raises(ValueError, match="cannot be empty"):
+        validate_bin_id("")

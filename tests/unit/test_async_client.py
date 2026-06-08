@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from filebin.client.async_client import AsyncFilebinClient
+from filebin.core.errors import BinNotFoundError
 from filebin.models.bin import BinModel
 from filebin.models.file import FileModel
 
@@ -130,3 +131,50 @@ async def test_download_archive(client, mock_transport, tmp_path) -> None:
     assert dest.read_bytes() == b"archive-data"
     assert dest.name == "test-bin.zip"
     mock_transport.get.assert_awaited_once_with("/archive/test-bin/zip", bin_id="test-bin")
+
+
+@pytest.mark.asyncio
+async def test_create_bin_returns_existing_bin(client, mock_transport) -> None:
+    """When the bin already exists, create_bin should return the fetched metadata."""
+    mock_response = AsyncMock()
+    mock_response.body = {"bin": {"id": "existing-bin"}, "files": []}
+    mock_transport.get.return_value = mock_response
+
+    result = await client.create_bin("existing-bin")
+
+    assert isinstance(result, BinModel)
+    assert result.id == "existing-bin"
+    mock_transport.get.assert_awaited_once_with("/existing-bin", bin_id="existing-bin")
+
+
+@pytest.mark.asyncio
+async def test_create_bin_returns_shell_for_new_bin(client, mock_transport) -> None:
+    """When the bin does not exist yet, create_bin should return a shell BinModel."""
+    mock_transport.get.side_effect = BinNotFoundError("brand-new-bin")
+
+    result = await client.create_bin("brand-new-bin")
+
+    assert isinstance(result, BinModel)
+    assert result.id == "brand-new-bin"
+    assert result.files == []
+    assert result.bytes == 0
+
+
+@pytest.mark.asyncio
+async def test_create_bin_generates_id_when_none_provided(client, mock_transport) -> None:
+    """When no bin_id is given, create_bin should generate a valid one."""
+    mock_transport.get.side_effect = BinNotFoundError("auto")
+
+    result = await client.create_bin()
+
+    assert isinstance(result, BinModel)
+    assert len(result.id) == 16
+
+
+@pytest.mark.asyncio
+async def test_create_bin_raises_on_invalid_id(client, mock_transport) -> None:
+    """An invalid custom bin ID should raise ValueError before any network call."""
+    with pytest.raises(ValueError):
+        await client.create_bin("!!invalid!!")
+
+    mock_transport.get.assert_not_awaited()

@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from filebin.client.sync_client import FilebinClient, _guard_no_running_loop
+from filebin.core.errors import BinNotFoundError
 from filebin.models.bin import BinModel
 from filebin.models.file import FileModel
 
@@ -92,3 +93,38 @@ def test_download_archive(client, mock_async_client, tmp_path) -> None:
     result = client.download_archive("test-bin", "zip", tmp_path)
     assert result == expected_path
     mock_async_client.download_archive.assert_awaited_once_with("test-bin", "zip", tmp_path)
+
+
+def test_create_bin_returns_existing_bin(client) -> None:
+    """When the bin exists, create_bin should return the fetched metadata."""
+    existing = BinModel.from_api_dict({"bin": {"id": "existing-bin"}, "files": []})
+    with patch.object(FilebinClient, "list_bin", return_value=existing):
+        result = client.create_bin("existing-bin")
+    assert isinstance(result, BinModel)
+    assert result.id == "existing-bin"
+
+
+def test_create_bin_returns_shell_for_new_bin(client) -> None:
+    """When the bin does not exist, create_bin should return a shell BinModel."""
+    with patch.object(FilebinClient, "list_bin", side_effect=BinNotFoundError("new-bin-01")):
+        result = client.create_bin("new-bin-01")
+    assert isinstance(result, BinModel)
+    assert result.id == "new-bin-01"
+    assert result.files == []
+    assert result.bytes == 0
+
+
+def test_create_bin_generates_id_when_none_provided(client) -> None:
+    """When no bin_id is provided, create_bin should auto-generate one."""
+    with patch.object(FilebinClient, "list_bin", side_effect=BinNotFoundError("auto")):
+        result = client.create_bin()
+    assert isinstance(result, BinModel)
+    assert len(result.id) == 16
+
+
+def test_create_bin_raises_on_invalid_id(client) -> None:
+    """An invalid custom bin_id should raise ValueError without a network call."""
+    with patch.object(FilebinClient, "list_bin") as mock_list_bin:
+        with pytest.raises(ValueError):
+            client.create_bin("!!invalid!!")
+        mock_list_bin.assert_not_called()
