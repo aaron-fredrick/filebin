@@ -179,16 +179,12 @@ def test_raise_for_status_405_locked_bin() -> None:
 
 def test_raise_for_status_405_expired_bin() -> None:
     with pytest.raises(BinNotFoundError):
-        HttpTransport._raise_for_status(
-            _parsed(405, "bin has expired"), bin_id="b", filename=None
-        )
+        HttpTransport._raise_for_status(_parsed(405, "bin has expired"), bin_id="b", filename=None)
 
 
 def test_raise_for_status_405_deleted_bin() -> None:
     with pytest.raises(BinNotFoundError):
-        HttpTransport._raise_for_status(
-            _parsed(405, "bin deleted"), bin_id="b", filename=None
-        )
+        HttpTransport._raise_for_status(_parsed(405, "bin deleted"), bin_id="b", filename=None)
 
 
 def test_raise_for_status_405_generic_fallback() -> None:
