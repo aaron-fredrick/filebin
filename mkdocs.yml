@@ -47,13 +47,16 @@ markdown_extensions:
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
 
+extra_javascript:
+  - https://unpkg.com/mermaid@11/dist/mermaid.min.js
+
 nav:
   - Home: index.md
   - Architecture:
     - Overview: architecture/overview.md
-    - Context: architecture/context.mmd
-    - Container: architecture/container.mmd
-    - Component: architecture/component.mmd
+    - Context: architecture/context.md
+    - Container: architecture/container.md
+    - Component: architecture/component.md
   - Design Contracts:
     - Retry Policy: contracts/retry_policy.md
     - Error Mapping: contracts/error_mapping.md
