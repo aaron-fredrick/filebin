@@ -9,14 +9,18 @@ import pytest
 
 from filebin.core.config import ClientConfig
 from filebin.core.errors import (
+    ApprovalRequiredError,
     AuthenticationError,
+    BinLockedError,
     BinNotFoundError,
+    FileDownloadLimitError,
     FileNotFoundError,
     NetworkError,
     RateLimitError,
     ServerError,
     StorageFullError,
     TimeoutError,
+    UploadValidationError,
 )
 from filebin.core.http import HttpTransport, ParsedResponse
 
@@ -139,9 +143,60 @@ def test_raise_for_status_403_storage_full() -> None:
         HttpTransport._raise_for_status(_parsed(403, "storage is full"), bin_id="b", filename=None)
 
 
+def test_raise_for_status_403_approval_required() -> None:
+    with pytest.raises(ApprovalRequiredError):
+        HttpTransport._raise_for_status(
+            _parsed(403, "requires approval"), bin_id="b", filename=None
+        )
+
+
+def test_raise_for_status_403_download_limit() -> None:
+    with pytest.raises(FileDownloadLimitError):
+        HttpTransport._raise_for_status(
+            _parsed(403, "download limit reached"), bin_id="b", filename=None
+        )
+
+
 def test_raise_for_status_403_auth_error() -> None:
     with pytest.raises(AuthenticationError):
         HttpTransport._raise_for_status(_parsed(403, "forbidden"), bin_id="b", filename=None)
+
+
+def test_raise_for_status_400_upload_validation() -> None:
+    with pytest.raises(UploadValidationError):
+        HttpTransport._raise_for_status(_parsed(400, "invalid size"), bin_id="b", filename=None)
+
+
+def test_raise_for_status_411_upload_validation() -> None:
+    with pytest.raises(UploadValidationError):
+        HttpTransport._raise_for_status(_parsed(411, "length required"), bin_id="b", filename=None)
+
+
+def test_raise_for_status_405_locked_bin() -> None:
+    with pytest.raises(BinLockedError):
+        HttpTransport._raise_for_status(_parsed(405, "bin is locked"), bin_id="b", filename=None)
+
+
+def test_raise_for_status_405_expired_bin() -> None:
+    with pytest.raises(BinNotFoundError):
+        HttpTransport._raise_for_status(_parsed(405, "bin has expired"), bin_id="b", filename=None)
+
+
+def test_raise_for_status_405_deleted_bin() -> None:
+    with pytest.raises(BinNotFoundError):
+        HttpTransport._raise_for_status(_parsed(405, "bin deleted"), bin_id="b", filename=None)
+
+
+def test_raise_for_status_405_generic_fallback() -> None:
+    with pytest.raises(ServerError):
+        HttpTransport._raise_for_status(
+            _parsed(405, "method not allowed"), bin_id="b", filename=None
+        )
+
+
+def test_raise_for_status_507_storage_full() -> None:
+    with pytest.raises(StorageFullError):
+        HttpTransport._raise_for_status(_parsed(507), bin_id="b", filename=None)
 
 
 def test_raise_for_status_404_file_not_found() -> None:

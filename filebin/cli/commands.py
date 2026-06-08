@@ -14,14 +14,13 @@ async def cmd_upload(args: argparse.Namespace, client: AsyncFilebinClient) -> No
         output.print_error(f"File not found: {path}")
         return
 
-    # If no bin provided, Filebin.net assigns one dynamically, but our strict typed
-    # client expects an ID. We let the HTTP layer POST to / if bin_id is missing,
-    # then redirect catches the new bin ID.
-    # For now, require it or generate a local random one for simplicity.
-    if not bin_id:
-        import uuid
-
-        bin_id = uuid.uuid4().hex[:16]
+    # Generate or validate bin ID using the client's create_bin method
+    try:
+        bin_model = await client.create_bin(bin_id)
+        bin_id = bin_model.id
+    except ValueError as e:
+        output.print_error(str(e))
+        return
 
     file_model = await client.upload_file(bin_id, path)
     output.print_success(f"Uploaded {file_model.filename} to bin {bin_id}")
@@ -57,3 +56,13 @@ async def cmd_lock(args: argparse.Namespace, client: AsyncFilebinClient) -> None
     bin_model = await client.lock_bin(args.bin)
     output.print_success(f"Locked bin {bin_model.id}")
     output.print_bin(bin_model)
+
+
+async def cmd_create_bin(args: argparse.Namespace, client: AsyncFilebinClient) -> None:
+    try:
+        bin_model = await client.create_bin(args.bin)
+        output.print_success(f"Created/Validated bin ID: {bin_model.id}")
+        if len(bin_model.files) > 0:
+            output.print_bin(bin_model)
+    except ValueError as e:
+        output.print_error(str(e))

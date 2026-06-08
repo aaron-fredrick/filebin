@@ -59,6 +59,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_lock = subparsers.add_parser("lock", help="Lock a bin (read-only)")
     p_lock.add_argument("bin", help="Bin ID")
 
+    # fbin create-bin [--bin <bin>]
+    p_create = subparsers.add_parser("create-bin", help="Create or validate a local bin ID")
+    p_create.add_argument("--bin", help="Custom bin ID to validate")
+
     return parser
 
 
@@ -82,6 +86,8 @@ async def _main(args: argparse.Namespace) -> None:
                 await commands.cmd_archive(args, client)
             elif args.command == "lock":
                 await commands.cmd_lock(args, client)
+            elif args.command == "create-bin":
+                await commands.cmd_create_bin(args, client)
         except FilebinError as exc:
             output.print_error(str(exc))
             sys.exit(1)

@@ -1,11 +1,15 @@
 import pytest
 
 from filebin.core.errors import (
+    ApprovalRequiredError,
     AuthenticationError,
     BinNotFoundError,
+    FileDownloadLimitError,
     FileNotFoundError,
     RateLimitError,
     ServerError,
+    StorageFullError,
+    UploadValidationError,
 )
 
 pytestmark = pytest.mark.unit
@@ -44,3 +48,31 @@ def test_authentication_error() -> None:
     assert exc.status_code == 403
     assert exc.bin_id == "test-123"
     assert str(exc) == "Access denied: Download limit reached (HTTP 403)"
+
+
+def test_approval_required_error() -> None:
+    exc = ApprovalRequiredError(bin_id="test-123")
+    assert exc.status_code == 403
+    assert exc.bin_id == "test-123"
+    assert "requires approval" in str(exc)
+
+
+def test_file_download_limit_error() -> None:
+    exc = FileDownloadLimitError(bin_id="test-123")
+    assert exc.status_code == 403
+    assert exc.bin_id == "test-123"
+    assert "exceeded limits" in str(exc)
+
+
+def test_storage_full_error() -> None:
+    exc = StorageFullError(bin_id="test-123")
+    assert exc.status_code == 507
+    assert exc.bin_id == "test-123"
+    assert "Storage full" in str(exc)
+
+
+def test_upload_validation_error() -> None:
+    exc = UploadValidationError("File too large", bin_id="test-123")
+    assert exc.status_code == 400
+    assert exc.bin_id == "test-123"
+    assert "Validation failed" in str(exc) or "Upload validation failed: File too large" in str(exc)
