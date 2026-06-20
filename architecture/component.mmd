@@ -1,0 +1,28 @@
+C4Component
+    title Component Diagram for Filebin SDK Core & Client
+
+    Container_Boundary(client_bound, "Client Layer") {
+        Component(async_client, "AsyncFilebinClient", "Primary Async API")
+        Component(sync_client, "FilebinClient", "Sync asyncio.run() wrapper")
+    }
+
+    Container_Boundary(core_bound, "Core Layer") {
+        Component(http, "HttpTransport", "aiohttp session manager")
+        Component(retry, "RetryPolicy", "Exponential backoff logic")
+        Component(errors, "Error Mapping", "Translates HTTP codes to typed Exceptions")
+        Component(config, "ClientConfig", "Immutable transport settings")
+    }
+
+    Container_Boundary(models_bound, "Model Layer") {
+        Component(bin_model, "BinModel", "Dataclass")
+        Component(file_model, "FileModel", "Dataclass")
+    }
+
+    Rel(sync_client, async_client, "Wraps")
+    Rel(async_client, http, "Delegates requests")
+    Rel(http, retry, "Executes via")
+    Rel(http, errors, "Raises")
+    Rel(http, config, "Reads settings from")
+    
+    Rel(async_client, bin_model, "Returns")
+    Rel(async_client, file_model, "Returns")
